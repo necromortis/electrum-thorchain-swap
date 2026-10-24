@@ -1,0 +1,9 @@
+{
+  "stages": {
+    "inbound_observed": {
+      "started": false,
+      "final_count": 0,
+      "completed": false
+    }
+  }
+}

@@ -1,0 +1,68 @@
+#!/usr/bin/python3
+"""Build the distributable zip of an Electrum external plugin.
+
+Derived from Electrum's contrib/make_plugin, made reproducible: members are
+added in sorted order with a fixed timestamp and mode, so the same source tree
+always yields the same archive and the sha256 Electrum pins can be compared
+against a build from source.
+
+usage: make_plugin <plugin_directory>
+"""
+import hashlib
+import json
+import os
+import sys
+import time
+import zipfile
+
+INCLUDE_SUFFIXES = ('.py', '.json', '.png', '.svg', '.qml', '.md', '.txt')
+EXCLUDE_DIRS = {'__pycache__', '.git', '.mypy_cache', '.pytest_cache'}
+# any fixed, valid zip timestamp; overridable for reproducible-build tooling
+_epoch = int(os.environ.get('SOURCE_DATE_EPOCH', '1735689600'))  # 2025-01-01
+ZIP_DATE_TIME = time.gmtime(max(_epoch, 315532800))[:6]  # zip cannot store dates before 1980
+
+if len(sys.argv) != 2:
+    print(f"usage: {os.path.basename(__file__)} <plugin_directory>", file=sys.stderr)
+    sys.exit(1)
+
+source_dir = sys.argv[1].rstrip('/')
+plugin_name = os.path.basename(source_dir)
+dest_dir = os.getcwd()
+
+try:
+    with open(os.path.join(source_dir, 'manifest.json'), 'r') as f:
+        manifest = json.load(f)
+except FileNotFoundError:
+    raise SystemExit("plugin doesn't contain manifest.json")
+if manifest.get('name') != plugin_name:
+    raise SystemExit(f"manifest name {manifest.get('name')!r} does not match directory {plugin_name!r}")
+version = manifest.get('version')
+zip_path = os.path.join(dest_dir, f'{plugin_name}-{version}.zip' if version else f'{plugin_name}.zip')
+
+members = []
+for folder_name, sub_folders, file_names in os.walk(source_dir):
+    sub_folders[:] = sorted(d for d in sub_folders if d not in EXCLUDE_DIRS)
+    for filename in sorted(file_names):
+        if not filename.endswith(INCLUDE_SUFFIXES) or filename.startswith('.') or filename.endswith('~'):
+            continue
+        file_path = os.path.join(folder_name, filename)
+        dest_path = os.path.normpath(os.path.join(plugin_name, os.path.relpath(file_path, source_dir)))
+        members.append((file_path, dest_path))
+
+if os.path.exists(zip_path):
+    os.unlink(zip_path)
+print('creating', zip_path)
+with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zip_object:
+    for file_path, dest_path in members:
+        info = zipfile.ZipInfo(dest_path, date_time=ZIP_DATE_TIME)
+        info.compress_type = zipfile.ZIP_DEFLATED
+        info.create_system = 3  # "Unix" on every platform, so the hash does not depend on the build OS
+        info.external_attr = 0o644 << 16
+        with open(file_path, 'rb') as f:
+            zip_object.writestr(info, f.read())
+        print('added', dest_path)
+
+with open(zip_path, 'rb') as f:
+    digest = hashlib.sha256(f.read()).hexdigest()
+print(f'Created {zip_path}')
+print(f'sha256 {digest}')

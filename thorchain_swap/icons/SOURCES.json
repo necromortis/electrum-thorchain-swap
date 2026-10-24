@@ -1,0 +1,207 @@
+{
+  "avax.avax.png": {
+    "asset": "AVAX.AVAX",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/info/logo.png",
+    "source": "trustwallet"
+  },
+  "avax.sol-0xfe6b19286885a4f7f55adad09c3cd1f906d2478f.png": {
+    "asset": "AVAX.SOL-0XFE6B19286885A4F7F55ADAD09C3CD1F906D2478F",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xFE6B19286885a4F7F55AdAD09C3Cd1f906D2478F/logo.png",
+    "source": "trustwallet"
+  },
+  "avax.usdc-0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e.png": {
+    "asset": "AVAX.USDC-0XB97EF9EF8734C71904D8002F8B6BC66DD9C48A6E",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E/logo.png",
+    "source": "trustwallet"
+  },
+  "avax.usdt-0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7.png": {
+    "asset": "AVAX.USDT-0X9702230A8EA53601F5CD2DC00FDBC13D4DF4A8C7",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7/logo.png",
+    "source": "trustwallet"
+  },
+  "base.eth.png": {
+    "asset": "BASE.ETH",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/base/info/logo.png",
+    "source": "trustwallet"
+  },
+  "base.usdc-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.png": {
+    "asset": "BASE.USDC-0X833589FCD6EDB6E08F4C7C32D4F71B54BDA02913",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/base/assets/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913/logo.png",
+    "source": "trustwallet"
+  },
+  "base.vvv-0xacfe6019ed1a7dc6f7b508c02d1b04ec88cc21bf.png": {
+    "asset": "BASE.VVV-0XACFE6019ED1A7DC6F7B508C02D1B04EC88CC21BF",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/base/assets/0xacfE6019Ed1A7Dc6f7B508C02d1b04ec88cC21bf/logo.png",
+    "source": "trustwallet"
+  },
+  "bch.bch.png": {
+    "asset": "BCH.BCH",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/bitcoincash/info/logo.png",
+    "source": "trustwallet"
+  },
+  "bsc.bnb.png": {
+    "asset": "BSC.BNB",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/info/logo.png",
+    "source": "trustwallet"
+  },
+  "bsc.btcb-0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c.png": {
+    "asset": "BSC.BTCB-0X7130D2A12B9BCBFAE4F2634D864A1EE1CE3EAD9C",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c/logo.png",
+    "source": "trustwallet"
+  },
+  "bsc.busd-0xe9e7cea3dedca5984780bafc599bd69add087d56.png": {
+    "asset": "BSC.BUSD-0XE9E7CEA3DEDCA5984780BAFC599BD69ADD087D56",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56/logo.png",
+    "source": "trustwallet"
+  },
+  "bsc.eth-0x2170ed0880ac9a755fd29b2688956bd959f933f8.png": {
+    "asset": "BSC.ETH-0X2170ED0880AC9A755FD29B2688956BD959F933F8",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x2170Ed0880ac9A755fd29B2688956BD959F933F8/logo.png",
+    "source": "trustwallet"
+  },
+  "bsc.twt-0x4b0f1812e5df2a09796481ff14017e6005508003.png": {
+    "asset": "BSC.TWT-0X4B0F1812E5DF2A09796481FF14017E6005508003",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x4B0F1812e5Df2A09796481Ff14017e6005508003/logo.png",
+    "source": "trustwallet"
+  },
+  "bsc.usdc-0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d.png": {
+    "asset": "BSC.USDC-0X8AC76A51CC950D9822D68B83FE1AD97B32CD580D",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d/logo.png",
+    "source": "trustwallet"
+  },
+  "bsc.usdt-0x55d398326f99059ff775485246999027b3197955.png": {
+    "asset": "BSC.USDT-0X55D398326F99059FF775485246999027B3197955",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x55d398326f99059fF775485246999027B3197955/logo.png",
+    "source": "trustwallet"
+  },
+  "btc.btc.png": {
+    "asset": "BTC.BTC",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/bitcoin/info/logo.png",
+    "source": "trustwallet"
+  },
+  "doge.doge.png": {
+    "asset": "DOGE.DOGE",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/doge/info/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.aave-0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9.png": {
+    "asset": "ETH.AAVE-0X7FC66500C84A76AD7E9C93437BFC5AC33E2DDAE9",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.dai-0x6b175474e89094c44da98b954eedeac495271d0f.png": {
+    "asset": "ETH.DAI-0X6B175474E89094C44DA98B954EEDEAC495271D0F",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.dpi-0x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b.png": {
+    "asset": "ETH.DPI-0X1494CA1F11D487C2BBE4543E90080AEBA4BA3C2B",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x1494CA1F11D487c2bBe4543E90080AeBa4BA3C2b/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.eth.png": {
+    "asset": "ETH.ETH",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.fox-0xc770eefad204b5180df6a14ee197d99d808ee52d.png": {
+    "asset": "ETH.FOX-0XC770EEFAD204B5180DF6A14EE197D99D808EE52D",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xc770EEfAd204B5180dF6a14Ee197D99d808ee52d/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.gusd-0x056fd409e1d7a124bd7017459dfea2f387b6d5cd.png": {
+    "asset": "ETH.GUSD-0X056FD409E1D7A124BD7017459DFEA2F387B6D5CD",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x056Fd409E1d7A124BD7017459dFEa2F387b6d5Cd/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.link-0x514910771af9ca656af840dff83e8264ecf986ca.png": {
+    "asset": "ETH.LINK-0X514910771AF9CA656AF840DFF83E8264ECF986CA",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x514910771AF9Ca656af840dff83E8264EcF986CA/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.lusd-0x5f98805a4e8be255a32880fdec7f6728c6568ba0.png": {
+    "asset": "ETH.LUSD-0X5F98805A4E8BE255A32880FDEC7F6728C6568BA0",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x5f98805A4E8be255a32880FDeC7F6728C6568bA0/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.snx-0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f.png": {
+    "asset": "ETH.SNX-0XC011A73EE8576FB46F5E1C5751CA3B9FE0AF2A6F",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.thor-0xa5f2211b9b8170f694421f2046281775e8468044.png": {
+    "asset": "ETH.THOR-0XA5F2211B9B8170F694421F2046281775E8468044",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xa5f2211B9b8170F694421f2046281775E8468044/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.usdc-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.png": {
+    "asset": "ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.usdp-0x8e870d67f660d95d5be530380d0ec0bd388289e1.png": {
+    "asset": "ETH.USDP-0X8E870D67F660D95D5BE530380D0EC0BD388289E1",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x8E870D67F660D95d5be530380D0eC0bd388289E1/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.usdt-0xdac17f958d2ee523a2206206994597c13d831ec7.png": {
+    "asset": "ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.wbtc-0x2260fac5e5542a773aa44fbcfedf7c193bc2c599.png": {
+    "asset": "ETH.WBTC-0X2260FAC5E5542A773AA44FBCFEDF7C193BC2C599",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.xrune-0x69fa0fee221ad11012bab0fdb45d444d3d2ce71c.png": {
+    "asset": "ETH.XRUNE-0X69FA0FEE221AD11012BAB0FDB45D444D3D2CE71C",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x69fa0feE221AD11012BAb0FdB45d444D3D2Ce71c/logo.png",
+    "source": "trustwallet"
+  },
+  "eth.yfi-0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e.png": {
+    "asset": "ETH.YFI-0X0BC529C00C6401AEF6D220BE8C6EA1667F6AD93E",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e/logo.png",
+    "source": "trustwallet"
+  },
+  "gaia.atom.png": {
+    "asset": "GAIA.ATOM",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/cosmos/info/logo.png",
+    "source": "trustwallet"
+  },
+  "ltc.ltc.png": {
+    "asset": "LTC.LTC",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/litecoin/info/logo.png",
+    "source": "trustwallet"
+  },
+  "sol.sol.png": {
+    "asset": "SOL.SOL",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/info/logo.png",
+    "source": "trustwallet"
+  },
+  "tron.trx.png": {
+    "asset": "TRON.TRX",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/tron/info/logo.png",
+    "source": "trustwallet"
+  },
+  "tron.usdt-tr7nhqjekqxgtci8q8zy4pl8otszgjlj6t.png": {
+    "asset": "TRON.USDT-TR7NHQJEKQXGTCI8Q8ZY4PL8OTSZGJLJ6T",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/tron/assets/TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t/logo.png",
+    "source": "trustwallet"
+  },
+  "xmr.xmr.png": {
+    "asset": "XMR.XMR",
+    "url": "https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/xmr.png",
+    "source": "spothq"
+  },
+  "xrp.xrp.png": {
+    "asset": "XRP.XRP",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ripple/info/logo.png",
+    "source": "trustwallet"
+  },
+  "zec.zec.png": {
+    "asset": "ZEC.ZEC",
+    "url": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/zcash/info/logo.png",
+    "source": "trustwallet"
+  }
+}

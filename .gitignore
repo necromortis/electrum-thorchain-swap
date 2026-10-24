@@ -1,0 +1,9 @@
+**/__pycache__/
+*.pyc
+*.swp
+*.zip
+/.venv*/
+.mypy_cache/
+.pytest_cache/
+.idea/
+.vscode/

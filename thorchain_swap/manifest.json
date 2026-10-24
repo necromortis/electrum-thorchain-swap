@@ -1,0 +1,11 @@
+{
+  "name": "thorchain_swap",
+  "fullname": "THORChain Swap",
+  "description": "Swap BTC into other assets through THORChain, one way. Builds a standard transaction to the THORChain inbound vault with an OP_RETURN memo; signing and broadcasting use Electrum's regular transaction dialog. Quotes (amount and destination address) are fetched from a configurable THORNode gateway (default: gateway.liquify.com) through Electrum's proxy settings. Swaps worth $100 or more pay a 0.1% fee to the plugin developer via a THORChain affiliate memo; smaller swaps are free. No other data is sent anywhere.",
+  "author": "necromortis",
+  "license": "MIT",
+  "icon": "thorchain.png",
+  "version": "0.0.1",
+  "min_electrum_version": "4.7.0",
+  "available_for": ["qt"]
+}
