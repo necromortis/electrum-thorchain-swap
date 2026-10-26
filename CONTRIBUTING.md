@@ -75,6 +75,7 @@ All keys live under `plugins.thorchain_swap.` in Electrum's config file:
 | key | default | meaning |
 |---|---|---|
 | `thornode_url` | `https://gateway.liquify.com/chain/thorchain_api` | THORNode to query; https only, except localhost and `.onion` |
+| `verify_url` | `https://public-thornode.nativeswap.io` | second THORNode that must confirm the inbound vault (it only receives the vault's public key); empty disables the check |
 | `slippage_bps` | `100` | price protection, basis points |
 | `streaming_interval` | `0` | blocks between sub-swaps |
 | `streaming_quantity` | `0` | number of sub-swaps, 0 = automatic |

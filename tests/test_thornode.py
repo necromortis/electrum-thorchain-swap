@@ -3,7 +3,7 @@ import os
 import unittest
 
 from thorchain_swap.thornode import (
-    InboundAddress, SwapQuote, Pool, ThornodeError, _clean_text, asset_chain, asset_display_name,
+    InboundAddress, SwapQuote, Pool, ThornodeError, Vault, _clean_text, asset_chain, asset_display_name,
     vault_address_from_pubkey, halt_reasons, validate_thornode_url,
 )
 
@@ -39,6 +39,21 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(q.fee_total, q.fee_outbound + q.fee_liquidity + q.fee_affiliate)
         self.assertGreater(q.recommended_gas_rate, 0)
 
+    def test_vault(self):
+        v = Vault.from_json(load_fixture('vault.json'))
+        self.assertTrue(v.accepts_inbound)
+        self.assertEqual(v.status, 'ActiveVault')
+        self.assertEqual(v.addresses['BTC'], 'bc1qrqrefwzvtv50r539hn7umufj84gm2xx9vz7ykw')
+        # the vault's BTC address is the one its key controls, and the inbound fixture agrees
+        self.assertEqual(vault_address_from_pubkey(v.pub_key), v.addresses['BTC'])
+        inbound = next(d for d in load_fixture('inbound_addresses.json') if d['chain'] == 'BTC')
+        self.assertEqual((inbound['pub_key'], inbound['address']), (v.pub_key, v.addresses['BTC']))
+        for status in ('RetiringVault',):
+            self.assertTrue(Vault(v.pub_key, 'AsgardVault', status, v.addresses).accepts_inbound)
+        for status in ('InactiveVault', 'InitVault', '', 'active'):
+            self.assertFalse(Vault(v.pub_key, 'AsgardVault', status, v.addresses).accepts_inbound)
+        self.assertFalse(Vault(v.pub_key, '', 'ActiveVault', v.addresses).accepts_inbound)
+
     def test_pools(self):
         pools = [Pool.from_json(d) for d in load_fixture('pools.json')]
         available = {p.asset for p in pools if p.is_available}
@@ -64,6 +79,18 @@ class TestUntrustedResponses(unittest.TestCase):
         self.assertTrue(InboundAddress.from_json(d).halted)
         d['halted'] = 'false'
         self.assertFalse(InboundAddress.from_json(d).halted)
+
+    def test_vault_validation(self):
+        good = load_fixture('vault.json')
+        for bad in ({'pub_key': ''}, {'addresses': None}, {'addresses': [{'chain': 'BTC'}]},
+                    {'addresses': [{'chain': 'BTC', 'address': 5}]}, {'addresses': ['bc1q...']}, {'status': 7}):
+            with self.assertRaises(ThornodeError):
+                Vault.from_json({**good, **bad})
+        with self.assertRaises(ThornodeError):
+            Vault.from_json([])
+        # chains are keyed upper-case whatever the server sends
+        v = Vault.from_json({**good, 'addresses': [{'chain': 'btc', 'address': 'x'}]})
+        self.assertEqual(v.addresses, {'BTC': 'x'})
 
     def test_pool_asset_format(self):
         with self.assertRaises(ThornodeError):

@@ -588,20 +588,25 @@ class SwapTab(QWidget, MessageBoxMixin, Logger):
                 relay.delivered.emit(guarded, result, None)
         self.window.run_coroutine_from_thread(wrapper(), name)
 
-    def _set_status(self, text: str, *, error: bool = False):
+    def _set_status(self, text: str, *, error: bool = False, warning: bool = False):
         self.status_label.setText(text)
         # scoped to QLabel: ColorScheme.as_stylesheet() targets QWidget and would also
         # colour the label's context menu
-        color = ColorScheme.RED.as_color().name()
-        self.status_label.setStyleSheet(f'QLabel {{ color: {color}; }}' if error else '')
+        if error:
+            color = ColorScheme.RED.as_color().name()
+        elif warning:
+            color = ColorScheme.YELLOW.as_color().name()
+        else:
+            color = ''
+        self.status_label.setStyleSheet(f'QLabel {{ color: {color}; }}' if color else '')
         self.status_label.setVisible(bool(text))
 
-    def _show_assets_error_or(self, text: str, *, error: bool = False):
+    def _show_assets_error_or(self, text: str, *, error: bool = False, warning: bool = False):
         """The asset-list error stays visible until the list loads; other texts yield to it."""
         if self._assets_error and self.asset_combo.count() == 0:
             self._set_status(self._assets_error, error=True)
         else:
-            self._set_status(text, error=error)
+            self._set_status(text, error=error, warning=warning)
 
     def _inputs(self) -> Optional[dict]:
         """Current swap request if every field is filled in, else None."""
@@ -757,7 +762,9 @@ class SwapTab(QWidget, MessageBoxMixin, Logger):
         self.swap_button.setEnabled(False)
         self.refresh_button.setEnabled(False)
         self._set_status(_('Updating quote...'))
-        self._run(self.plugin.fetch_offer(**inputs), partial(self._on_offer, request_id),
+        # the wallet's own chain tip lets the core tell a stale verification node from a lying one
+        local_height = self.wallet.adb.get_local_height()
+        self._run(self.plugin.fetch_offer(**inputs, local_btc_height=local_height), partial(self._on_offer, request_id),
                   name='thorchain_swap.quote')
 
     def _on_offer(self, request_id: int, offer: Optional[SwapOffer], error):
@@ -795,6 +802,10 @@ class SwapTab(QWidget, MessageBoxMixin, Logger):
         vault_note = _('Inbound vault: {}').format(offer.inbound.address)
         if offer.thornode_host and offer.thornode_host not in DEFAULT_THORNODE_URL:
             vault_note += ' (' + _('from {}').format(offer.thornode_host) + ')'
+        if offer.vault_check.confirmed:
+            vault_note += ', ' + _('confirmed by {}').format(offer.vault_check.host)
+        elif offer.vault_check.host:
+            vault_note += ', ' + _('not confirmed')
         streaming = ''
         if offer.streaming_interval or offer.streaming_quantity:
             streaming = ', ' + _('streaming over {} blocks').format(q.streaming_swap_blocks)
@@ -840,7 +851,8 @@ class SwapTab(QWidget, MessageBoxMixin, Logger):
             self._set_status('\n'.join(problems), error=True)
             self.swap_button.setEnabled(False)
         else:
-            self._show_assets_error_or('')
+            # an unconfirmed vault is a warning, not a blocker: the second node may simply be down
+            self._show_assets_error_or(self.offer.vault_check.warning, warning=True)
             self.swap_button.setEnabled(not self.debounce_timer.isActive())
 
     def _update_countdown(self):

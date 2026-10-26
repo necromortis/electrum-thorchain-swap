@@ -29,6 +29,11 @@ QUOTE_SAFETY_MARGIN_SEC = 60
 QUOTE_TTL_SEC = 15 * 60
 # One deadline for the whole quote round-trip, whatever the client's retries do.
 FETCH_DEADLINE_SEC = 40
+# The verification node only confirms the vault; a slow answer must not hold up the quote.
+VERIFY_TIMEOUT_SEC = 6
+# A verification node whose view of the Bitcoin chain is this far behind the wallet's own
+# chain tip has stopped syncing: it is treated as unavailable, not as contradicting the first node.
+VERIFY_MAX_BTC_LAG_BLOCKS = 6
 
 DEFAULT_SLIPPAGE_BPS = 100
 DEFAULT_AFFILIATE_BPS = 10
@@ -55,6 +60,19 @@ class SwapSettings:
 
 
 @dataclass(frozen=True)
+class VaultCheck:
+    """Outcome of asking a second, independent THORNode about the inbound vault.
+
+    A contradiction (unknown vault, wrong status, different address) never ends up
+    here: it is raised as a SwapError. This only records whether the confirmation
+    could be obtained, and why not.
+    """
+    host: str  # verification node asked, '' when the check is disabled
+    confirmed: bool
+    warning: str = ''  # user-facing reason the vault is not confirmed, '' when it is or the check is off
+
+
+@dataclass(frozen=True)
 class SwapOffer:
     """A quote from THORNode together with everything derived from it.
 
@@ -76,6 +94,7 @@ class SwapOffer:
     halts: List[str]
     created_at: float
     thornode_host: str
+    vault_check: VaultCheck
 
     @property
     def params(self) -> SwapParams:
@@ -267,6 +286,23 @@ class ThorchainSwapPlugin(BasePlugin):
     def get_client(self) -> ThornodeClient:
         return ThornodeClient(self.thornode_url())
 
+    def verify_url(self) -> str:
+        """URL of the vault verification node; '' when the check is disabled in the config."""
+        try:
+            url = str(self.config.THORCHAIN_SWAP_VERIFY_URL or '').strip()
+        except (ValueError, TypeError, AssertionError):
+            url = ''
+        if not url:
+            return ''
+        try:
+            return validate_thornode_url(url)
+        except ThornodeError as e:
+            raise SwapError(_("Invalid vault verification URL in the plugin settings: {}").format(e))
+
+    def get_verify_client(self) -> Optional[ThornodeClient]:
+        url = self.verify_url()
+        return ThornodeClient(url) if url else None
+
     def asset_usd_price(self, asset: str) -> Optional[float]:
         """USD price of one unit of the asset from the cached pool list, None if unknown."""
         for pool in self._pools:
@@ -297,16 +333,19 @@ class ThorchainSwapPlugin(BasePlugin):
             slippage_bps: int,
             streaming_interval: int = 0,
             streaming_quantity: int = 0,
+            local_btc_height: int = 0,
     ) -> SwapOffer:
         """Ask THORNode for a quote and validate everything we are going to rely on.
 
+        local_btc_height is the wallet's own Bitcoin chain tip (0 = unknown), used to
+        tell a verification node that stopped syncing from one that disagrees.
         Raises SwapError with a message meant for the user; nothing else escapes.
         """
         try:
             return await asyncio.wait_for(
                 self._fetch_offer(to_asset=to_asset, destination=destination, amount_sats=amount_sats,
                                   slippage_bps=slippage_bps, streaming_interval=streaming_interval,
-                                  streaming_quantity=streaming_quantity),
+                                  streaming_quantity=streaming_quantity, local_btc_height=local_btc_height),
                 FETCH_DEADLINE_SEC)
         except SwapError:
             raise
@@ -320,7 +359,7 @@ class ThorchainSwapPlugin(BasePlugin):
             raise SwapError(_("Could not build the swap memo: {}").format(e))
 
     async def _fetch_offer(self, *, to_asset: str, destination: str, amount_sats: int, slippage_bps: int,
-                           streaming_interval: int, streaming_quantity: int) -> SwapOffer:
+                           streaming_interval: int, streaming_quantity: int, local_btc_height: int) -> SwapOffer:
         if amount_sats <= 0:
             raise SwapError(_("Enter a positive amount"))
         if amount_sats < MIN_SWAP_SATS:
@@ -393,6 +432,7 @@ class ThorchainSwapPlugin(BasePlugin):
         if quote.inbound_address != inbound.address:
             # both are active vaults, but we only have the pubkey check for one of them
             raise SwapError(_("THORChain rotated its inbound vault while quoting. Please request a new quote."))
+        vault_check = await self._verify_vault(inbound, primary_host=client.host, local_btc_height=local_btc_height)
         if quote.expected_amount_out <= 0:
             raise SwapError(_("Amount too small: THORChain would deliver nothing after fees"))
         now = time.time()
@@ -436,7 +476,65 @@ class ThorchainSwapPlugin(BasePlugin):
             halts=halts,
             created_at=now,
             thornode_host=client.host,
+            vault_check=vault_check,
         )
+
+    async def _verify_vault(self, inbound: InboundAddress, *, primary_host: str, local_btc_height: int) -> VaultCheck:
+        """Confirm the inbound vault with a second, independently operated THORNode.
+
+        The first node is trusted for everything else, but the vault address is where
+        a lie costs the whole amount, so a second opinion is asked for that alone. The
+        verification node only ever sees the vault's public key, nothing about the swap.
+
+        Node unreachable or not in sync: the offer goes ahead, with a warning. Node in
+        sync and contradicting the first one: SwapError, the swap is refused.
+        """
+        verifier = self.get_verify_client()
+        if verifier is None:
+            return VaultCheck(host='', confirmed=False)
+        host = verifier.host
+        if host == primary_host:
+            return self._unconfirmed(host, _("it is the same host as the THORNode, so it cannot be a second opinion"))
+        try:
+            vault = await asyncio.wait_for(verifier.get_vault(inbound.pub_key), VERIFY_TIMEOUT_SEC)
+        except ThornodeRequestRejected as e:
+            if e.status not in (400, 404):
+                return self._unconfirmed(host, str(e))
+            # "vault not found" from a node that is up to date is a contradiction; from a
+            # node that stopped syncing it means nothing. Its own view of the Bitcoin chain,
+            # compared with the wallet's, tells the two apart without trusting the first node.
+            if not await self._verifier_in_sync(verifier, local_btc_height):
+                return self._unconfirmed(host, _("the node is out of sync"))
+            raise SwapError(self._contradiction(primary_host, host, _("it does not know this vault")))
+        except asyncio.TimeoutError:
+            return self._unconfirmed(host, _("no answer within {} seconds").format(VERIFY_TIMEOUT_SEC))
+        except ThornodeError as e:
+            return self._unconfirmed(host, str(e))
+        if not vault.accepts_inbound:
+            raise SwapError(self._contradiction(
+                primary_host, host, _("there the vault's status is {}").format(vault.status or _("unknown"))))
+        if vault.addresses.get(BTC_CHAIN) != inbound.address:
+            raise SwapError(self._contradiction(primary_host, host, _("it reports a different Bitcoin address for this vault")))
+        return VaultCheck(host=host, confirmed=True)
+
+    @staticmethod
+    async def _verifier_in_sync(verifier: ThornodeClient, local_btc_height: int) -> bool:
+        if local_btc_height <= 0:
+            return True  # nothing to compare with; assume the worse case, a real contradiction
+        try:
+            observed = await asyncio.wait_for(verifier.get_last_observed_height(BTC_CHAIN), VERIFY_TIMEOUT_SEC)
+        except (ThornodeError, asyncio.TimeoutError):
+            return False
+        return observed >= local_btc_height - VERIFY_MAX_BTC_LAG_BLOCKS
+
+    @staticmethod
+    def _unconfirmed(host: str, reason: str) -> VaultCheck:
+        return VaultCheck(host=host, confirmed=False, warning=_("Vault not confirmed by {}: {}").format(host, reason))
+
+    @staticmethod
+    def _contradiction(primary_host: str, host: str, detail: str) -> str:
+        return (_("The inbound vault reported by {} is contradicted by {}: {}.").format(primary_host, host, detail)
+                + ' ' + _("Refusing to swap. Try again in a minute; if this persists, one of the two nodes is wrong."))
 
     def _build_memo(self, *, to_asset: str, quoted_asset: str, destination: str, limit: int,
                     interval: int, quantity: int, affiliate: str, affiliate_bps: int,
@@ -524,6 +622,7 @@ class ThorchainSwapPlugin(BasePlugin):
             'affiliate': offer.affiliate,
             'affiliate_bps': offer.affiliate_bps,
             'vault_address': offer.inbound.address,
+            'vault_confirmed_by': offer.vault_check.host if offer.vault_check.confirmed else '',
             'memo': offer.memo,
             'thornode_host': offer.thornode_host,
         }

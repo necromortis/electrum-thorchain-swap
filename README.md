@@ -38,6 +38,8 @@ you control elsewhere. It does not receive other coins into Electrum.
   (minus network fees) instead of swapping at a bad price.
 - Streaming swaps for larger amounts (several sub-swaps over time for a better
   price), with the same settings as swap.thorchain.org.
+- The vault address your bitcoin goes to is confirmed by a second, independently
+  run THORChain node before the Swap button is enabled.
 - Works with password-protected wallets, hardware wallets and multisig
   wallets that can complete a signature on this machine.
 - Icons and asset names for everything THORChain currently trades.
@@ -113,9 +115,12 @@ marked *refunded* in the plugin's History.
 Quotes are requested from a public THORChain gateway (`gateway.liquify.com`
 by default; another node can be set in the configuration). The request
 contains the amount, the asset and the destination address, nothing about
-your wallet. If Electrum is configured to use a proxy or Tor, the plugin's
-requests go through it as well. Asset icons are bundled with the plugin, so
-no icon servers are contacted. The plugin has no telemetry.
+your wallet. The vault address is then confirmed with a second node
+(`public-thornode.nativeswap.io` by default), which only receives the vault's
+public key, nothing about your swap. If Electrum is configured to use a
+proxy or Tor, the plugin's requests go through it as well. Asset icons are
+bundled with the plugin, so no icon servers are contacted. The plugin has no
+telemetry.
 
 ## Limitations
 
@@ -125,8 +130,11 @@ no icon servers are contacted. The plugin has no telemetry.
   the quote is valid (15 minutes). Take your time typing, not signing.
 - A swap cannot be cancelled once the bitcoin transaction is confirmed.
   THORChain executes it or refunds it.
-- The plugin trusts the configured THORChain gateway for the vault address
-  it pays. If that matters to you, point it at a node you run yourself.
+- The vault address comes from the THORChain gateway and is cross-checked
+  with a second, independent node. If the second node cannot be reached, the
+  tab shows a warning and the swap is still allowed; if the two nodes
+  disagree, the swap is refused. Both hosts can be changed in the
+  configuration; point them at nodes you run yourself if that matters to you.
 
 ## Support
 

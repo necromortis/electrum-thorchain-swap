@@ -39,6 +39,8 @@ _MAX_RESPONSE_BYTES = 4 * 1024 * 1024  # pools is ~40 KB; anything bigger is not
 _MAX_ERROR_MESSAGE_CHARS = 300
 # THORNode's symbol rule is [A-Za-z0-9-._]+ (common/symbol.go); '~' marks trade assets
 _ASSET_RE = re.compile(r'^[A-Z0-9]+[.~][A-Z0-9._\-]+$', re.IGNORECASE)
+# bech32 "thorpub" key as it may appear in a URL path: hrp, separator, bech32 charset
+_THORPUB_RE = re.compile(r'^thorpub1[02-9ac-hj-np-z]{6,200}$')
 
 
 class ThornodeError(Exception):
@@ -215,6 +217,39 @@ class Pool:
         if self.asset_tor_price <= 0:
             return None
         return amount_1e8 * self.asset_tor_price / 10 ** 16
+
+
+@dataclass(frozen=True)
+class Vault:
+    """An Asgard vault as served by /thorchain/vault/{pubkey}; only the fields used for verification."""
+    pub_key: str
+    vault_type: str  # 'AsgardVault'
+    status: str  # 'ActiveVault', 'RetiringVault', 'InactiveVault' or 'InitVault'
+    addresses: Dict[str, str]  # chain -> inbound address of this vault
+
+    @classmethod
+    def from_json(cls, d: Mapping[str, Any]) -> 'Vault':
+        what = 'vault'
+        pub_key = _field(d, 'pub_key', 'str', what=what, required=True)
+        raw = d.get('addresses')
+        if not isinstance(raw, list):
+            raise ThornodeError('malformed vault response: missing addresses')
+        addresses = {}
+        for entry in raw:
+            chain = _field(entry, 'chain', 'str', what=what, required=True).upper()
+            addresses[chain] = _field(entry, 'address', 'str', what=what, required=True)
+        return cls(
+            pub_key=pub_key,
+            vault_type=_field(d, 'type', 'str', what=what, default=''),
+            status=_field(d, 'status', 'str', what=what, default=''),
+            addresses=addresses,
+        )
+
+    @property
+    def accepts_inbound(self) -> bool:
+        """Funds sent to this vault get processed: it is active, or retiring (still observed,
+        its funds migrate to the new vault)."""
+        return self.vault_type == 'AsgardVault' and self.status in ('ActiveVault', 'RetiringVault')
 
 
 def asset_chain(asset: str) -> str:
@@ -426,6 +461,21 @@ class ThornodeClient(Logger):
                     if height > 0:
                         return height
         raise ThornodeError('malformed lastblock response')
+
+    async def get_last_observed_height(self, chain: str = BTC_CHAIN) -> int:
+        """Height of the newest block of an external chain that this node has observed."""
+        body = await self._get('lastblock')
+        if isinstance(body, list):
+            for item in body:
+                if isinstance(item, Mapping) and item.get('chain') == chain:
+                    return _field(item, 'last_observed_in', 'int', what='lastblock', required=True)
+        raise ThornodeError('malformed lastblock response')
+
+    async def get_vault(self, pub_key: str) -> Vault:
+        """The vault behind a 'thorpub' key. THORNode answers HTTP 400 for a key it does not know."""
+        if not _THORPUB_RE.match(pub_key):
+            raise ThornodeError('not a thorpub key')
+        return Vault.from_json(await self._get(f'vault/{pub_key}'))
 
     async def get_pools(self) -> List[Pool]:
         body = await self._get('pools')

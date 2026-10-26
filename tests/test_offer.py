@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import shutil
@@ -10,12 +11,15 @@ from electrum.simple_config import SimpleConfig
 import thorchain_swap  # noqa: F401  (registers the plugin's ConfigVars)
 from thorchain_swap.memo import parse_swap_memo
 from thorchain_swap.swap_tx import MIN_SWAP_SATS
-from thorchain_swap.thorchain_swap import QUOTE_SAFETY_MARGIN_SEC, QUOTE_TTL_SEC, SwapError, ThorchainSwapPlugin
-from thorchain_swap.thornode import InboundAddress, Pool, SwapQuote
+from thorchain_swap.thorchain_swap import (
+    QUOTE_SAFETY_MARGIN_SEC, QUOTE_TTL_SEC, SwapError, ThorchainSwapPlugin, VaultCheck,
+)
+from thorchain_swap.thornode import InboundAddress, Pool, SwapQuote, ThornodeError, ThornodeRequestRejected, Vault
 
 FIXTURES = os.path.join(os.path.dirname(__file__), 'fixtures')
 ETH_DEST = '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'
 USDC = 'ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48'
+BTC_HEIGHT = 973240  # Bitcoin height observed by the fake verification node
 
 
 def load_fixture(name):
@@ -71,6 +75,26 @@ class FakeClient:
         return next(p for p in self.pools if p.asset == asset)
 
 
+class FakeVerifier:
+    """The second THORNode: knows the fixture vault and nothing else, like the real endpoint."""
+
+    def __init__(self):
+        self.vault = load_fixture('vault.json')
+        self.btc_height = BTC_HEIGHT
+        self.host = 'fake.verifier'
+        self.vault_calls = []
+        self.height_calls = 0
+
+    async def get_vault(self, pub_key):
+        self.vault_calls.append(pub_key)
+        if pub_key != self.vault['pub_key']:
+            raise ThornodeRequestRejected(f"vault with pubkey({pub_key}) doesn't exist: vault not found", status=400)
+        return Vault.from_json(self.vault)
+
+    async def get_last_observed_height(self, chain):
+        self.height_calls += 1
+        return self.btc_height
+
 
 class TestFetchOffer(unittest.IsolatedAsyncioTestCase):
 
@@ -78,8 +102,10 @@ class TestFetchOffer(unittest.IsolatedAsyncioTestCase):
         self.tmpdir = tempfile.mkdtemp(prefix='thorchain-swap-unittest-')
         self.config = SimpleConfig({'electrum_path': self.tmpdir})
         self.client = FakeClient()
+        self.verifier = FakeVerifier()
         self.plugin = ThorchainSwapPlugin(None, self.config, 'thorchain_swap')
         self.plugin.get_client = lambda: self.client
+        self.plugin.get_verify_client = lambda: self.verifier
 
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
@@ -302,6 +328,113 @@ class TestFetchOffer(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(SwapError) as cm:
             await self.fetch()
         self.assertIn('not registered', str(cm.exception))
+
+    # ---- second-opinion vault check
+
+    async def test_vault_confirmed(self):
+        offer = await self.fetch(local_btc_height=BTC_HEIGHT)
+        self.assertTrue(offer.vault_check.confirmed)
+        self.assertEqual(offer.vault_check.host, 'fake.verifier')
+        self.assertEqual(offer.vault_check.warning, '')
+        # the verifier only ever gets the vault key, never the swap
+        self.assertEqual(self.verifier.vault_calls, [offer.inbound.pub_key])
+        self.assertEqual(self.verifier.height_calls, 0)
+
+    async def test_vault_check_disabled(self):
+        self.config.THORCHAIN_SWAP_VERIFY_URL = ''
+        self.plugin.get_verify_client = ThorchainSwapPlugin.get_verify_client.__get__(self.plugin)
+        offer = await self.fetch()
+        self.assertEqual(offer.vault_check, VaultCheck(host='', confirmed=False))
+        self.assertEqual(self.verifier.vault_calls, [])
+
+    async def test_verify_url_validation(self):
+        real = ThorchainSwapPlugin.get_verify_client.__get__(self.plugin)
+        self.config.THORCHAIN_SWAP_VERIFY_URL = 'https://public-thornode.nativeswap.io/'
+        self.assertEqual(real().host, 'public-thornode.nativeswap.io')
+        for bad in ('http://evil.example', 'not a url', 'https://x.y/?q=1'):
+            self.config.THORCHAIN_SWAP_VERIFY_URL = bad
+            with self.assertRaises(SwapError):
+                real()
+
+    async def test_verifier_unavailable_is_a_warning(self):
+        async def down(pub_key):
+            raise ThornodeError('Could not connect to THORNode fake.verifier')
+        self.verifier.get_vault = down
+        offer = await self.fetch(local_btc_height=BTC_HEIGHT)
+        self.assertFalse(offer.vault_check.confirmed)
+        self.assertIn('not confirmed', offer.vault_check.warning)
+        self.assertIn('fake.verifier', offer.vault_check.warning)
+        self.assertEqual(offer.blocking_problems(), [])
+
+        async def slow(pub_key):
+            raise asyncio.TimeoutError()
+        self.verifier.get_vault = slow
+        offer = await self.fetch(local_btc_height=BTC_HEIGHT)
+        self.assertIn('seconds', offer.vault_check.warning)
+
+        async def broken(pub_key):
+            raise ThornodeRequestRejected('internal error', status=500)
+        self.verifier.get_vault = broken
+        offer = await self.fetch(local_btc_height=BTC_HEIGHT)
+        self.assertFalse(offer.vault_check.confirmed)
+        self.assertIn('internal error', offer.vault_check.warning)
+
+    async def test_same_host_is_not_a_second_opinion(self):
+        self.verifier.host = self.client.host
+        offer = await self.fetch(local_btc_height=BTC_HEIGHT)
+        self.assertFalse(offer.vault_check.confirmed)
+        self.assertIn('same host', offer.vault_check.warning)
+        self.assertEqual(self.verifier.vault_calls, [])
+
+    async def test_unknown_vault_blocks_when_verifier_is_in_sync(self):
+        self.verifier.vault['pub_key'] = 'thorpub1addwnpepqva65k2jxjvafm6dufxh8zca2ghue4hsrwgx27tzjyj5e3uagqku7ql58h5'
+        for local_height in (BTC_HEIGHT, BTC_HEIGHT + 6, BTC_HEIGHT - 50, 0):
+            with self.assertRaises(SwapError) as cm:
+                await self.fetch(local_btc_height=local_height)
+            self.assertIn('does not know this vault', str(cm.exception))
+            self.assertIn('fake.verifier', str(cm.exception))
+            self.assertIn('fake.thornode', str(cm.exception))
+
+    async def test_unknown_vault_is_a_warning_when_verifier_is_stale(self):
+        self.verifier.vault['pub_key'] = 'thorpub1addwnpepqva65k2jxjvafm6dufxh8zca2ghue4hsrwgx27tzjyj5e3uagqku7ql58h5'
+        offer = await self.fetch(local_btc_height=BTC_HEIGHT + 7)
+        self.assertFalse(offer.vault_check.confirmed)
+        self.assertIn('out of sync', offer.vault_check.warning)
+        self.assertEqual(self.verifier.height_calls, 1)
+        # a node that cannot even report its height counts as unavailable, not as a contradiction
+        async def no_height(chain):
+            raise ThornodeError('busy')
+        self.verifier.get_last_observed_height = no_height
+        offer = await self.fetch(local_btc_height=BTC_HEIGHT)
+        self.assertFalse(offer.vault_check.confirmed)
+
+    async def test_vault_address_mismatch_blocks(self):
+        for entry in self.verifier.vault['addresses']:
+            if entry['chain'] == 'BTC':
+                entry['address'] = 'bc1q704ak5tqw547nql6m65rjyaqgryq6h54d6ks2s'
+        with self.assertRaises(SwapError) as cm:
+            await self.fetch(local_btc_height=BTC_HEIGHT)
+        self.assertIn('different Bitcoin address', str(cm.exception))
+
+    async def test_vault_status_blocks(self):
+        for status, ok in (('ActiveVault', True), ('RetiringVault', True), ('InactiveVault', False),
+                           ('InitVault', False), ('', False)):
+            self.verifier.vault['status'] = status
+            if ok:
+                self.assertTrue((await self.fetch(local_btc_height=BTC_HEIGHT)).vault_check.confirmed)
+            else:
+                with self.assertRaises(SwapError):
+                    await self.fetch(local_btc_height=BTC_HEIGHT)
+        self.verifier.vault['status'] = 'ActiveVault'
+        self.verifier.vault['type'] = 'YggdrasilVault'
+        with self.assertRaises(SwapError):
+            await self.fetch(local_btc_height=BTC_HEIGHT)
+
+    async def test_malformed_vault_is_a_warning(self):
+        self.verifier.vault['addresses'] = None
+        offer = await self.fetch(local_btc_height=BTC_HEIGHT)
+        self.assertFalse(offer.vault_check.confirmed)
+        self.assertIn('malformed', offer.vault_check.warning)
 
     async def test_fetch_assets_filters(self):
         assets = await self.plugin.fetch_assets()

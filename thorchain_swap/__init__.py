@@ -8,12 +8,18 @@ from electrum.simple_config import ConfigVar, SimpleConfig
 plugin_name = "thorchain_swap"
 
 DEFAULT_THORNODE_URL = "https://gateway.liquify.com/chain/thorchain_api"
+# operated by a different party than the default THORNode above; see ThorchainSwapPlugin._verify_vault
+DEFAULT_VERIFY_URL = "https://public-thornode.nativeswap.io"
 
 # note: external plugins are imported as "electrum_external_plugins.<name>",
 #       which contains a dot, so ConfigVar gets the literal plugin name
 #       instead of __name__.
 SimpleConfig.THORCHAIN_SWAP_THORNODE_URL = ConfigVar(
     'plugins.thorchain_swap.thornode_url', default=DEFAULT_THORNODE_URL, type_=str, plugin=plugin_name)
+# second, independently run THORNode that must confirm the inbound vault address;
+# it only receives the vault's public key. An empty value disables the check.
+SimpleConfig.THORCHAIN_SWAP_VERIFY_URL = ConfigVar(
+    'plugins.thorchain_swap.verify_url', default=DEFAULT_VERIFY_URL, type_=str, plugin=plugin_name)
 # maximum accepted slippage against the quoted amount, in basis points
 SimpleConfig.THORCHAIN_SWAP_SLIPPAGE_BPS = ConfigVar(
     'plugins.thorchain_swap.slippage_bps', default=100, type_=int, plugin=plugin_name)

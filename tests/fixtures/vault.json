@@ -1,0 +1,106 @@
+{
+  "block_height": 28203756,
+  "pub_key": "thorpub1addwnpepqgpx9za9xd2e22hvsj9gn40erhnrp0u8njpqm9sy6wdjmcnpw7fajaan99h",
+  "coins": [
+    {
+      "asset": "BCH.BCH",
+      "amount": "96637292590"
+    },
+    {
+      "asset": "TRON.TRX",
+      "amount": "833567970600",
+      "decimals": 6
+    }
+  ],
+  "type": "AsgardVault",
+  "status": "ActiveVault",
+  "status_since": 28203871,
+  "membership": [
+    "thorpub1addwnpepq05hr74qgg4zlwmzghy7jx4d3xhpyuar3rf24l0nz4kf004kx6cw7n37kdd",
+    "thorpub1addwnpepq07zcq0hkeh6g3h80mdvty28t7xy9sal938xnedrc28tqg8ehf2fcgn4r5e"
+  ],
+  "chains": [
+    "AVAX",
+    "BASE",
+    "BCH",
+    "BSC",
+    "BTC",
+    "DOGE",
+    "ETH",
+    "GAIA",
+    "LTC",
+    "SOL",
+    "THOR",
+    "TRON",
+    "XRP",
+    "ZEC"
+  ],
+  "inbound_tx_count": 7225,
+  "outbound_tx_count": 9150,
+  "routers": [
+    {
+      "chain": "AVAX",
+      "router": "0x00dc6100103BC402d490aEE3F9a5560cBd91f1d4"
+    }
+  ],
+  "addresses": [
+    {
+      "chain": "AVAX",
+      "address": "0x51649cf810ea9f1f61165044b7149070c67f79c8"
+    },
+    {
+      "chain": "BASE",
+      "address": "0x51649cf810ea9f1f61165044b7149070c67f79c8"
+    },
+    {
+      "chain": "BCH",
+      "address": "qqvq099cf3dj3uwjyk70mn03xg74rdgcc53rdqreag"
+    },
+    {
+      "chain": "BSC",
+      "address": "0x51649cf810ea9f1f61165044b7149070c67f79c8"
+    },
+    {
+      "chain": "BTC",
+      "address": "bc1qrqrefwzvtv50r539hn7umufj84gm2xx9vz7ykw"
+    },
+    {
+      "chain": "DOGE",
+      "address": "D7L9qbUENRJ6dp4YUcoHLG9UmfPF6GESfy"
+    },
+    {
+      "chain": "ETH",
+      "address": "0x51649cf810ea9f1f61165044b7149070c67f79c8"
+    },
+    {
+      "chain": "GAIA",
+      "address": "cosmos1rqrefwzvtv50r539hn7umufj84gm2xx96cq0jr"
+    },
+    {
+      "chain": "LTC",
+      "address": "ltc1qrqrefwzvtv50r539hn7umufj84gm2xx9g7yqw7"
+    },
+    {
+      "chain": "SOL",
+      "address": "4ZG5opFRTvkVDBPEgLynpTD5gh3VGPrR3zBVAPQ3GQry"
+    },
+    {
+      "chain": "THOR",
+      "address": "thor1rqrefwzvtv50r539hn7umufj84gm2xx9ule58u"
+    },
+    {
+      "chain": "TRON",
+      "address": "THPaGKe6aZkUcNht24hcscZPLwtcJAbpun"
+    },
+    {
+      "chain": "XRP",
+      "address": "rsUhJLXbnrPFao1Akpo58Vy1tXeA6gkdUA"
+    },
+    {
+      "chain": "ZEC",
+      "address": "tex1rqrefwzvtv50r539hn7umufj84gm2xx9cav0nq"
+    }
+  ],
+  "pub_key_eddsa": "thorpub1zcjduepqxnttxu9jthl7zyppt8readul74x5gdy0gzq7sgglqmxycu7j49nq97y9n5",
+  "deficit": null
+}
